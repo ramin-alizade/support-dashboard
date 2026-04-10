@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FX Command | Supervisor & Mentor Dashboard</title>
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            /* Forex Professional Palette */
+            --navy: #0f172a;
+            --emerald: #10b981;
+            --crimson: #ef4444;
+            --amber: #f59e0b;
+            --primary: #3b82f6;
+            
+            /* Light Theme Variables (Default) */
+            --bg-app: #f1f5f9;
+            --bg-card: #ffffff;
+            --bg-sidebar: #0f172a;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        }
+
+        [data-theme="dark"] {
+            --bg-app: #020617;
+            --bg-card: #0f172a;
+            --bg-sidebar: #020617;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: #1e293b;
+            --shadow: 0 10px 15px -3px rgba(0,0,0,0.5);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background-color: var(--bg-app); color: var(--text-main); overflow: hidden; height: 100vh; transition: 0.3s ease; }
+
+        /* --- Top Level Screen Containers --- */
+        .screen { height: 100vh; width: 100vw; display: none; }
+        .screen.active { display: flex; }
+
+        /* --- Login & Signup Screens --- */
+        #login-screen, #signup-screen { 
+            align-items: center; justify-content: center; 
+            background: radial-gradient(circle at top right, var(--primary), var(--navy));
+        }
+        .auth-card {
+            background: var(--bg-card); padding: 48px; border-radius: 24px; box-shadow: var(--shadow);
+            width: 100%; max-width: 440px; border: 1px solid var(--border);
+        }
+        .auth-card h1 { font-weight: 800; margin-bottom: 8px; text-align: center; }
+        .auth-card p { color: var(--text-muted); text-align: center; margin-bottom: 32px; font-size: 0.9rem; }
+        
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 8px; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; }
+        .form-group input { 
+            width: 100%; padding: 14px; border-radius: 12px; border: 1px solid var(--border);
+            background: var(--bg-app); color: var(--text-main); outline: none; transition: 0.2s;
+        }
+        .form-group input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1); }
+        
+        .btn-main { 
+            width: 100%; padding: 14px; border-radius: 12px; border: none; background: var(--primary);
+            color: white; font-weight: 700; cursor: pointer; transition: 0.3s;
+        }
+        .btn-main:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.4); }
+
+        /* --- Main Dashboard Shell --- */
+        #main-dashboard { display: grid; grid-template-columns: 280px 1fr; }
+
+        /* Sidebar */
+        aside.sidebar { 
+            background: var(--bg-sidebar); color: white; height: 100vh; padding: 32px 20px;
+            display: flex; flex-direction: column; z-index: 100;
+        }
+        .logo { font-size: 1.5rem; font-weight: 800; color: var(--primary); margin-bottom: 48px; display: flex; align-items: center; gap: 12px; }
+        .nav-links { list-style: none; flex-grow: 1; }
+        .nav-item { margin-bottom: 8px; }
+        .nav-btn { 
+            width: 100%; display: flex; align-items: center; gap: 16px; padding: 14px 16px;
+            background: transparent; border: none; color: #94a3b8; border-radius: 12px;
+            font-weight: 600; cursor: pointer; transition: 0.2s; text-align: left;
+        }
+        .nav-btn:hover, .nav-btn.active { background: rgba(59, 130, 246, 0.1); color: white; }
+        .nav-btn.active { background: var(--primary); box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3); }
+
+        /* Main Content & Toolbar */
+        main.content { height: 100vh; overflow-y: auto; display: flex; flex-direction: column; }
+        .toolbar { 
+            height: 80px; background: var(--bg-card); border-bottom: 1px solid var(--border);
+            padding: 0 40px; display: flex; align-items: center; justify-content: space-between;
+            position: sticky; top: 0; z-index: 90; backdrop-filter: blur(10px);
+        }
+        .search-bar { 
+            display: flex; align-items: center; background: var(--bg-app); padding: 10px 20px;
+            border-radius: 12px; width: 400px; border: 1px solid var(--border);
+        }
+        .search-bar input { border: none; background: transparent; color: var(--text-main); outline: none; margin-left: 12px; width: 100%; }
+
+        .toolbar-actions { display: flex; align-items: center; gap: 24px; }
+        .icon-btn { font-size: 1.2rem; color: var(--text-muted); cursor: pointer; transition: 0.2s; position: relative; }
+        .icon-btn:hover { color: var(--primary); }
+        .pulse-dot { 
+            position: absolute; top: -4px; right: -4px; width: 8px; height: 8px; background: var(--crimson); 
+            border-radius: 50%; animation: pulse 2s infinite; 
+        }
+        @keyframes pulse { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(2.5); opacity: 0; } }
+
+        /* Dynamic View Container */
+        .view-container { padding: 40px; }
+        .view { display: none; animation: fadeIn 0.4s ease; }
+        .view.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* --- Widgets & Grids --- */
+        .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; margin-bottom: 32px; }
+        .kpi-card { 
+            background: var(--bg-card); padding: 24px; border-radius: 20px; border: 1px solid var(--border);
+            box-shadow: var(--shadow); position: relative; overflow: hidden;
+        }
+        .kpi-card::after { content: ''; position: absolute; top: 0; right: 0; width: 80px; height: 80px; background: var(--primary); opacity: 0.03; border-radius: 50%; transform: translate(30%, -30%); }
+        .kpi-label { color: var(--text-muted); font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+        .kpi-value { font-size: 2rem; font-weight: 800; margin-top: 8px; color: var(--text-main); }
+
+        .chart-row { display: grid; grid-template-columns: 1fr; gap: 24px; margin-bottom: 32px; }
+        .card { background: var(--bg-card); border-radius: 24px; border: 1px solid var(--border); box-shadow: var(--shadow); padding: 32px; }
+
+        /* High-Density Table */
+        .table-container { background: var(--bg-card); border-radius: 24px; border: 1px solid var(--border); box-shadow: var(--shadow); overflow: hidden; }
+        table { width: 100%; border-collapse: collapse; }
+        th { background: var(--bg-app); padding: 18px 24px; text-align: left; color: var(--text-muted); font-size: 0.8rem; font-weight: 800; text-transform: uppercase; }
+        td { padding: 18px 24px; border-top: 1px solid var(--border); font-size: 0.9rem; font-weight: 500; }
+        tr:hover td { background: rgba(59, 130, 246, 0.02); }
+
+        .badge { padding: 6px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; }
+        .badge-open { background: rgba(59, 130, 246, 0.1); color: var(--primary); }
+        .badge-pending { background: rgba(245, 158, 11, 0.1); color: var(--amber); }
+        .badge-resolved { background: rgba(16, 185, 129, 0.1); color: var(--emerald); }
+
+        /* Escalation Alerts */
+        .escalation-list { display: grid; gap: 16px; }
+        .alert-item { 
+            background: var(--bg-card); padding: 24px; border-radius: 20px; border: 1px solid var(--border);
+            border-left: 6px solid var(--crimson); display: flex; align-items: center; justify-content: space-between;
+        }
+        .alert-item h4 { color: var(--crimson); font-weight: 800; margin-bottom: 4px; }
+        .alert-item p { font-size: 0.9rem; color: var(--text-muted); }
+
+        /* Mentoring Hub */
+        .mentoring-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+        .leaderboard-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border); }
+        .live-feed { background: var(--bg-app); padding: 16px; border-radius: 12px; height: 300px; overflow-y: auto; font-size: 0.85rem; line-height: 1.6; }
+        .chat-msg { margin-bottom: 12px; padding: 10px; border-radius: 8px; background: var(--bg-card); border: 1px solid var(--border); }
+        .chat-msg .name { font-weight: 800; color: var(--primary); margin-bottom: 4px; display: block; }
+    </style>
+</head>
+<body data-theme="light">
+
+    <!-- LOGIN SCREEN -->
+    <section id="login-screen" class="screen active">
+        <div class="auth-card">
+            <h1>FX COMMAND</h1>
+            <p>Supervisor & Mentor Command Center</p>
+            <form onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <label>Supervisor ID</label>
+                    <input type="text" placeholder="ALEX_99_SV" value="ALEX_99_SV" required>
+                </div>
+                <div class="form-group">
+                    <label>Access Key</label>
+                    <input type="password" placeholder="••••••••" value="password" required>
+                </div>
+                <button type="submit" class="btn-main">Initialize Session</button>
+            </form>
+            <p style="margin-top: 24px; text-align: center;">New to the floor? <a href="#" onclick="switchScreen('signup-screen')" style="color: var(--primary); font-weight: 700; text-decoration: none;">Request Clearance</a></p>
+        </div>
+    </section>
+
+    <!-- SIGNUP SCREEN -->
+    <section id="signup-screen" class="screen">
+        <div class="auth-card">
+            <h1>CLEARANCE</h1>
+            <p>Submit your credentials for review</p>
+            <form onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" placeholder="Alex Johnson" required>
+                </div>
+                <div class="form-group">
+                    <label>Department Code</label>
+                    <input type="text" placeholder="FX-SV-UNIT" required>
+                </div>
+                <div class="form-group">
+                    <label>Set Access Key</label>
+                    <input type="password" required>
+                </div>
+                <button type="submit" class="btn-main">Submit Clearance</button>
+            </form>
+            <p style="margin-top: 24px; text-align: center;"><a href="#" onclick="switchScreen('login-screen')" style="color: var(--primary); font-weight: 700; text-decoration: none;">Return to Login</a></p>
+        </div>
+    </section>
+
+    <!-- MAIN DASHBOARD -->
+    <section id="main-dashboard" class="screen">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <i class="fas fa-bolt"></i>
+                <span>FX COMMAND</span>
+            </div>
+            <ul class="nav-links">
+                <li class="nav-item"><button class="nav-btn active" onclick="switchView('overview')"><i class="fas fa-chart-pie"></i> Overview</button></li>
+                <li class="nav-item"><button class="nav-btn" onclick="switchView('tickets')"><i class="fas fa-ticket"></i> Client Tickets</button></li>
+                <li class="nav-item"><button class="nav-btn" onclick="switchView('escalations')"><i class="fas fa-fire"></i> Escalations</button></li>
+                <li class="nav-item"><button class="nav-btn" onclick="switchView('mentoring')"><i class="fas fa-users-gear"></i> Team Mentoring</button></li>
+            </ul>
+            <div style="margin-top: auto; padding-top: 24px; border-top: 1px solid rgba(255,255,255,0.1);">
+                <button class="nav-btn" onclick="switchScreen('login-screen')" style="color: var(--crimson);"><i class="fas fa-power-off"></i> Logout</button>
+            </div>
+        </aside>
+
+        <!-- Content Area -->
+        <main class="content">
+            <header class="toolbar">
+                <div class="search-bar">
+                    <i class="fas fa-search" style="color: var(--text-muted)"></i>
+                    <input type="text" placeholder="Search client MT5 ID, Ticket UUID, or Agent name...">
+                </div>
+                <div class="toolbar-actions">
+                    <div class="icon-btn" onclick="toggleTheme()"><i class="fas fa-moon" id="theme-icon"></i></div>
+                    <div class="icon-btn"><i class="fas fa-bell"></i><span class="pulse-dot"></span></div>
+                    <div class="toolbar-actions" style="border-left: 1px solid var(--border); padding-left: 20px;">
+                        <span style="font-weight: 700; font-size: 0.9rem;">Supervisor Alex</span>
+                        <div style="width: 36px; height: 36px; border-radius: 10px; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: 800;">AJ</div>
+                    </div>
+                </div>
+            </header>
+
+            <div class="view-container">
+                <!-- VIEW: OVERVIEW -->
+                <div id="overview" class="view active">
+                    <h2 style="margin-bottom: 24px; font-weight: 800;">Floor Overview</h2>
+                    <div class="kpi-grid">
+                        <div class="kpi-card"><div class="kpi-label">Avg Response Time</div><div class="kpi-value">48s</div></div>
+                        <div class="kpi-card"><div class="kpi-label">CSAT Score</div><div class="kpi-value">4.9/5.0</div></div>
+                        <div class="kpi-card"><div class="kpi-label">Active Live Chats</div><div class="kpi-value">32</div></div>
+                        <div class="kpi-card"><div class="kpi-label">Open Global Tickets</div><div class="kpi-value">142</div></div>
+                    </div>
+                    <div class="chart-row">
+                        <div class="card">
+                            <h4 style="margin-bottom: 20px;">Weekly Global Volume vs. Resolution Rate</h4>
+                            <div style="height: 350px;"><canvas id="volumeChart"></canvas></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- VIEW: TICKETS -->
+                <div id="tickets" class="view">
+                    <h2 style="margin-bottom: 24px; font-weight: 800;">High-Density Ticket Queue</h2>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr><th>Ticket ID</th><th>Client Name</th><th>Issue Type</th><th>Status</th><th>Agent</th><th>Wait</th></tr>
+                            </thead>
+                            <tbody id="ticket-body">
+                                <!-- Populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- VIEW: ESCALATIONS -->
+                <div id="escalations" class="view">
+                    <h2 style="margin-bottom: 24px; font-weight: 800; color: var(--crimson);">Critical Escalations Command</h2>
+                    <div class="escalation-list">
+                        <div class="alert-item">
+                            <div><h4>VIP Withdrawal Delay - $50,000+</h4><p>Client: #88219 (Mark V.) | MetaTrader 5 | Delay: 4h+</p></div>
+                            <button class="btn-main" style="width: auto; padding: 10px 20px; background: var(--crimson);">Intervene</button>
+                        </div>
+                        <div class="alert-item">
+                            <div><h4>MT5 Server #4 Latency Lag</h4><p>50+ Users reporting execution delay in London session. Region: EU.</p></div>
+                            <button class="btn-main" style="width: auto; padding: 10px 20px; background: var(--crimson);">Escalate to Tech</button>
+                        </div>
+                        <div class="alert-item" style="border-left-color: var(--amber);">
+                            <div><h4>Large Margin Call - High Profile</h4><p>Client: #99011 | Margin Level: 22%. Risk of liquidation.</p></div>
+                            <button class="btn-main" style="width: auto; padding: 10px 20px; background: var(--amber);">Send Warning</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- VIEW: MENTORING -->
+                <div id="mentoring" class="view">
+                    <h2 style="margin-bottom: 24px; font-weight: 800;">Mentoring & Performance Hub</h2>
+                    <div class="mentoring-grid">
+                        <div class="card">
+                            <h4 style="margin-bottom: 20px;">Agent Leaderboard (Today)</h4>
+                            <div id="leaderboard"></div>
+                        </div>
+                        <div class="card">
+                            <h4 style="margin-bottom: 20px;">Live Mentor Feed (Simulated)</h4>
+                            <div class="live-feed" id="live-feed">
+                                <div class="chat-msg"><span class="name">Elena (Agent)</span>I'm struggling with Client #441's MT5 error code 132.</div>
+                                <div class="chat-msg"><span class="name" style="color:var(--emerald)">Alex (Supervisor)</span>Elena, check their server suffix. It should be .real for live accounts.</div>
+                                <div class="chat-msg"><span class="name">Marcus (Agent)</span>Withdrawal processed for VIP client #881.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </section>
+
+    <script>
+        // --- Core Navigation & Screen Switching ---
+        function switchScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+            
+            if (screenId === 'main-dashboard') {
+                // Initialize Charts only after dashboard becomes visible
+                setTimeout(initCharts, 100);
+            }
+        }
+
+        function switchView(viewId) {
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.getElementById(viewId).classList.add('active');
+            
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.getAttribute('onclick').includes(viewId));
+            });
+        }
+
+        function handleLogin(e) {
+            e.preventDefault();
+            switchScreen('main-dashboard');
+        }
+
+        // --- Theme Engine ---
+        function toggleTheme() {
+            const body = document.body;
+            const currentTheme = body.getAttribute('data-theme');
+            const targetTheme = currentTheme === 'light' ? 'dark' : 'light';
+            body.setAttribute('data-theme', targetTheme);
+            document.getElementById('theme-icon').className = targetTheme === 'light' ? 'fas fa-moon' : 'fas fa-sun';
+            // Re-render charts for theme visibility
+            initCharts();
+        }
+
+        // --- Mock Data Population ---
+        function populateMockData() {
+            // Populate Ticket Table
+            const tickets = [
+                { id: 'FX-881', name: 'John Sterling', type: 'MT5 Execution', status: 'Open', agent: 'Elena R.', wait: '5m' },
+                { id: 'FX-882', name: 'Sarah Jenkins', type: 'Deposit Error', status: 'Pending', agent: 'Marcus C.', wait: '12m' },
+                { id: 'FX-883', name: 'Victor Hugo', type: 'KYC Document', status: 'Resolved', agent: 'Sarah S.', wait: '1h' },
+                { id: 'FX-884', name: 'Linda Vance', type: 'Spread Inquiry', status: 'Open', agent: 'None', wait: '2m' },
+                { id: 'FX-885', name: 'Michael Corleone', type: 'Withdrawal', status: 'Pending', agent: 'Elena R.', wait: '4h' },
+                { id: 'FX-886', name: 'Bruce Wayne', type: 'MT5 Login', status: 'Resolved', agent: 'Marcus C.', wait: '10m' },
+                { id: 'FX-887', name: 'Peter Parker', type: 'Deposit Error', status: 'Open', agent: 'None', wait: '1m' },
+                { id: 'FX-888', name: 'Diana Prince', type: 'VIP Support', status: 'Pending', agent: 'Sarah S.', wait: '30m' },
+                { id: 'FX-889', name: 'Tony Stark', type: 'API Issue', status: 'Open', agent: 'Elena R.', wait: '15m' },
+                { id: 'FX-890', name: 'Barry Allen', type: 'Speed Delay', status: 'Resolved', agent: 'Marcus C.', wait: '2s' }
+            ];
+
+            const ticketBody = document.getElementById('ticket-body');
+            ticketBody.innerHTML = tickets.map(t => `
+                <tr>
+                    <td><strong>${t.id}</strong></td>
+                    <td>${t.name}</td>
+                    <td>${t.type}</td>
+                    <td><span class="badge badge-${t.status.toLowerCase()}">${t.status}</span></td>
+                    <td>${t.agent}</td>
+                    <td>${t.wait}</td>
+                </tr>
+            `).join('');
+
+            // Populate Leaderboard
+            const agents = [
+                { name: 'Elena Rodriguez', score: 98, status: 'Top Performer' },
+                { name: 'Marcus Chen', score: 94, status: 'On Target' },
+                { name: 'Sarah Smith', score: 88, status: 'On Target' },
+                { name: 'Kevin Miller', score: 72, status: 'Coaching Req.' }
+            ];
+
+            document.getElementById('leaderboard').innerHTML = agents.map(a => `
+                <div class="leaderboard-item">
+                    <div><span style="font-weight: 800; color: var(--primary); margin-right: 12px;">${a.score}%</span>${a.name}</div>
+                    <span style="font-size: 0.75rem; font-weight: 700; color: ${a.score < 80 ? 'var(--crimson)' : 'var(--emerald)'}">${a.status}</span>
+                </div>
+            `).join('');
+        }
+
+        // --- Chart Engine ---
+        let volumeChartInstance = null;
+
+        function initCharts() {
+            const ctx = document.getElementById('volumeChart');
+            if (!ctx) return;
+
+            const isDark = document.body.getAttribute('data-theme') === 'dark';
+            const colorMain = isDark ? '#f8fafc' : '#1e293b';
+            const colorGrid = isDark ? '#1e293b' : '#e2e8f0';
+
+            if (volumeChartInstance) volumeChartInstance.destroy();
+
+            volumeChartInstance = new Chart(ctx.getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                    datasets: [
+                        {
+                            label: 'Chat Volume',
+                            data: [420, 580, 510, 690, 820, 310, 250],
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            fill: true,
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Resolution Rate (%)',
+                            data: [92, 88, 95, 85, 98, 99, 97],
+                            borderColor: '#10b981',
+                            borderDash: [5, 5],
+                            tension: 0.4,
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { labels: { color: colorMain, font: { weight: 'bold' } } } },
+                    scales: {
+                        y: { 
+                            beginAtZero: true, grid: { color: colorGrid }, 
+                            ticks: { color: colorMain }, title: { display: true, text: 'Volume', color: colorMain }
+                        },
+                        y1: { 
+                            position: 'right', grid: { display: false }, 
+                            ticks: { color: colorMain }, title: { display: true, text: 'Resolution %', color: colorMain }
+                        },
+                        x: { grid: { display: false }, ticks: { color: colorMain } }
+                    }
+                }
+            });
+        }
+
+        // Initialize Mock Data on Script Load
+        populateMockData();
+    </script>
+</body>
+</html>
