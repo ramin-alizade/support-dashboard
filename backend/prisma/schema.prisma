@@ -1,0 +1,28 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            Int      @id @default(autoincrement())
+  name          String
+  email         String   @unique
+  password_hash String
+  role          String
+  created_at    DateTime @default(now())
+}
+
+model Escalation {
+  id               Int      @id @default(autoincrement())
+  ticket_id        String
+  client_name      String
+  severity         String   // e.g., Critical, High
+  status           String   @default("Open") // e.g., Open, Resolved
+  assigned_agent   String
+  supervisor_notes String?
+  created_at       DateTime @default(now())
+}

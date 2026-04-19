@@ -51,14 +51,48 @@ support-dashboard/
 │
 ├── index.html          # Entire application logic, styles, and structure
 └── README.md           # Documentation
-Setup & Usage
-Clone the Repository:
-git clone https://github.com/ramin-alizade/support-dashboard.git
-Run Locally:
-Simply open the index.html file in any modern web browser (Chrome, Safari, or Edge).
+## Setup & Usage
 
-Authentication:
-The login screen is currently simulated. Click "Initialize Session" with the default credentials to enter the dashboard.
+### 1. Clone the Repository
+```bash
+git clone https://github.com/ramin-alizade/support-dashboard.git
+cd support-dashboard
+```
+
+### 2. Prerequisites
+- Node.js (v16 or higher)
+- PostgreSQL database
+
+### 3. Backend Setup
+1. Navigate to the backend directory:
+   ```bash
+   cd backend
+   ```
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Configure environment variables:
+   - Copy `.env.example` to `.env`.
+   - Update the `.env` file with your database credentials and preferred settings.
+4. Set up the database (using Prisma):
+   ```bash
+   npx prisma migrate dev
+   ```
+5. Start the backend server:
+   ```bash
+   npm start
+   ```
+   The backend will run on `http://localhost:5001`.
+
+### 4. Frontend Setup
+1. Ensure the backend is running.
+2. From the project root, open `index.html` using a local web server (e.g., VS Code Live Server).
+3. The frontend is configured to communicate with the backend at `http://localhost:5001`.
+   - If using VS Code Live Server, it typically runs on `http://localhost:5500`.
+
+### Authentication
+The login screen now connects to the backend API. Use the credentials created during the registration process or as seeded in your database.
 
 Deployment:
 This project is optimized for GitHub Pages. Enable it in your repository settings under the "Pages" tab to host the dashboard live.
